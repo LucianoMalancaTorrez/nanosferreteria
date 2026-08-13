@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { FiShoppingCart, FiFilter, FiX, FiGrid, FiList } from 'react-icons/fi';
@@ -10,7 +10,7 @@ import { formatCurrency, getImageUrl } from '@/lib/utils';
 import { useCart } from '@/hooks/useCart';
 import toast from 'react-hot-toast';
 
-export default function CatalogoPage() {
+function CatalogoContent() {
   const searchParams = useSearchParams();
   const [productos, setProductos] = useState<Producto[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
@@ -276,5 +276,13 @@ export default function CatalogoPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function CatalogoPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-slate-500">Cargando catálogo...</div>}>
+      <CatalogoContent />
+    </Suspense>
   );
 }
