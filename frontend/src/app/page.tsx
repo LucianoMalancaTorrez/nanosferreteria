@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { FiArrowRight, FiTruck, FiShield, FiClock, FiStar, FiShoppingCart } from 'react-icons/fi';
 import { FaWhatsapp } from 'react-icons/fa';
+import CategoryIcon from '@/components/CategoryIcon';
 import api from '@/lib/api';
 import type { Banner, Producto, Categoria } from '@/types';
 import { formatCurrency, getImageUrl } from '@/lib/utils';
@@ -117,8 +118,8 @@ export default function HomePage() {
             {categorias.map((cat) => (
               <Link key={cat.id} href={`/catalogo?categoriaId=${cat.id}`}
                     className="card-hover group p-6 text-center">
-                <div className="w-16 h-16 mx-auto rounded-2xl gradient-primary flex items-center justify-center text-white text-2xl font-bold mb-4 group-hover:scale-110 transition-transform duration-300">
-                  {cat.nombre.charAt(0)}
+                <div className="w-16 h-16 mx-auto rounded-2xl gradient-primary flex items-center justify-center text-white text-2xl font-bold mb-4 group-hover:scale-110 transition-transform duration-300 shadow-md shadow-primary-500/20">
+                  <CategoryIcon nombre={cat.nombre} slug={cat.slug} imagenUrl={cat.imagenUrl} size={30} />
                 </div>
                 <h3 className="font-bold text-navy-600 group-hover:text-primary-600 transition-colors">{cat.nombre}</h3>
                 <p className="text-xs text-slate-500 mt-1">{cat.subcategorias?.length || 0} subcategorías</p>
