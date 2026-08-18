@@ -14,6 +14,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,9 +28,6 @@ import java.util.Map;
 public class ProductoController {
 
     private final ProductoService productoService;
-    private final ImagenService imagenService;
-    private final ProductoRepository productoRepository;
-    private final ImagenProductoRepository imagenProductoRepository;
 
     // ==================== PUBLIC ====================
 
@@ -104,21 +102,7 @@ public class ProductoController {
             @PathVariable Long id,
             @RequestParam("files") List<MultipartFile> files) throws IOException {
 
-        Producto producto = productoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Producto", "id", id));
-
-        for (int i = 0; i < files.size(); i++) {
-            String url = imagenService.saveImage(files.get(i), "productos");
-            ImagenProducto imagen = ImagenProducto.builder()
-                    .producto(producto)
-                    .url(url)
-                    .altText(producto.getNombre())
-                    .orden(producto.getImagenes().size() + i)
-                    .principal(producto.getImagenes().isEmpty() && i == 0)
-                    .build();
-            imagenProductoRepository.save(imagen);
-        }
-
+        productoService.uploadImages(id, files);
         return ResponseEntity.ok(Map.of("message", files.size() + " imagen(es) subida(s)"));
     }
 
@@ -126,12 +110,7 @@ public class ProductoController {
     public ResponseEntity<Map<String, String>> deleteImage(
             @PathVariable Long id, @PathVariable Long imgId) throws IOException {
 
-        ImagenProducto imagen = imagenProductoRepository.findById(imgId)
-                .orElseThrow(() -> new ResourceNotFoundException("Imagen", "id", imgId));
-
-        imagenService.deleteImage(imagen.getUrl());
-        imagenProductoRepository.delete(imagen);
-
+        productoService.deleteImage(id, imgId);
         return ResponseEntity.ok(Map.of("message", "Imagen eliminada"));
     }
 }

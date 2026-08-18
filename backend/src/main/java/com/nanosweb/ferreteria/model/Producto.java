@@ -59,7 +59,7 @@ public class Producto {
     @Builder.Default
     private Boolean destacado = false;
 
-    @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @Builder.Default
     private List<ImagenProducto> imagenes = new ArrayList<>();
 

@@ -9,6 +9,7 @@ import com.nanosweb.ferreteria.model.ImagenProducto;
 import com.nanosweb.ferreteria.model.Producto;
 import com.nanosweb.ferreteria.repository.CategoriaRepository;
 import com.nanosweb.ferreteria.repository.ProductoRepository;
+import com.nanosweb.ferreteria.repository.ImagenProductoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,7 +17,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.Normalizer;
 import java.util.List;
@@ -29,6 +32,8 @@ public class ProductoService {
 
     private final ProductoRepository productoRepository;
     private final CategoriaRepository categoriaRepository;
+    private final ImagenProductoRepository imagenProductoRepository;
+    private final ImagenService imagenService;
 
     public PageResponse<ProductoResponse> findAll(Long categoriaId, String marca,
                                                    BigDecimal precioMin, BigDecimal precioMax,
@@ -55,19 +60,19 @@ public class ProductoService {
     }
 
     public ProductoResponse findBySlug(String slug) {
-        Producto producto = productoRepository.findBySlug(slug)
+        Producto producto = productoRepository.findBySlugWithImages(slug)
                 .orElseThrow(() -> new ResourceNotFoundException("Producto", "slug", slug));
         return toResponse(producto);
     }
 
     public ProductoResponse findById(Long id) {
-        Producto producto = productoRepository.findById(id)
+        Producto producto = productoRepository.findByIdWithImages(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Producto", "id", id));
         return toResponse(producto);
     }
 
     public List<ProductoResponse> findDestacados() {
-        return productoRepository.findByDestacadoTrueAndActivoTrueOrderByCreatedAtDesc()
+        return productoRepository.findDestacadosWithImages()
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -97,10 +102,10 @@ public class ProductoService {
     }
 
     public List<ProductoResponse> findRelacionados(String slug, int limit) {
-        Producto producto = productoRepository.findBySlug(slug)
+        Producto producto = productoRepository.findBySlugWithImages(slug)
                 .orElseThrow(() -> new ResourceNotFoundException("Producto", "slug", slug));
 
-        return productoRepository.findByCategoriaIdAndActivoTrueAndIdNot(
+        return productoRepository.findRelacionadosWithImages(
                         producto.getCategoria().getId(), producto.getId(), PageRequest.of(0, limit))
                 .stream()
                 .map(this::toResponse)
@@ -133,7 +138,7 @@ public class ProductoService {
 
     @Transactional
     public ProductoResponse update(Long id, ProductoRequest request) {
-        Producto producto = productoRepository.findById(id)
+        Producto producto = productoRepository.findByIdWithImages(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Producto", "id", id));
 
         Categoria categoria = categoriaRepository.findById(request.getCategoriaId())
@@ -162,6 +167,34 @@ public class ProductoService {
             throw new ResourceNotFoundException("Producto", "id", id);
         }
         productoRepository.deleteById(id);
+    }
+
+    @Transactional
+    public void uploadImages(Long id, List<MultipartFile> files) throws IOException {
+        Producto producto = productoRepository.findByIdWithImages(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Producto", "id", id));
+
+        int currentCount = producto.getImagenes().size();
+        for (int i = 0; i < files.size(); i++) {
+            String url = imagenService.saveImage(files.get(i), "productos");
+            ImagenProducto imagen = ImagenProducto.builder()
+                    .producto(producto)
+                    .url(url)
+                    .altText(producto.getNombre())
+                    .orden(currentCount + i)
+                    .principal(currentCount == 0 && i == 0)
+                    .build();
+            imagenProductoRepository.save(imagen);
+        }
+    }
+
+    @Transactional
+    public void deleteImage(Long productoId, Long imgId) throws IOException {
+        ImagenProducto imagen = imagenProductoRepository.findById(imgId)
+                .orElseThrow(() -> new ResourceNotFoundException("Imagen", "id", imgId));
+
+        imagenService.deleteImage(imagen.getUrl());
+        imagenProductoRepository.delete(imagen);
     }
 
     public long count() {

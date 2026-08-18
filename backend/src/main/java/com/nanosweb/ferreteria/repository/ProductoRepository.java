@@ -17,9 +17,22 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
 
     Optional<Producto> findBySlug(String slug);
 
-    List<Producto> findByDestacadoTrueAndActivoTrueOrderByCreatedAtDesc();
+    @Query("SELECT DISTINCT p FROM Producto p LEFT JOIN FETCH p.imagenes LEFT JOIN FETCH p.categoria WHERE p.slug = :slug")
+    Optional<Producto> findBySlugWithImages(@Param("slug") String slug);
 
-    @Query("SELECT p FROM Producto p WHERE p.activo = true " +
+    @Query("SELECT DISTINCT p FROM Producto p LEFT JOIN FETCH p.imagenes LEFT JOIN FETCH p.categoria WHERE p.id = :id")
+    Optional<Producto> findByIdWithImages(@Param("id") Long id);
+
+    @Query("SELECT DISTINCT p FROM Producto p LEFT JOIN FETCH p.imagenes LEFT JOIN FETCH p.categoria WHERE p.destacado = true AND p.activo = true ORDER BY p.createdAt DESC")
+    List<Producto> findDestacadosWithImages();
+
+    @Query(value = "SELECT DISTINCT p FROM Producto p LEFT JOIN FETCH p.imagenes LEFT JOIN FETCH p.categoria WHERE p.activo = true " +
+           "AND (:categoriaId IS NULL OR p.categoria.id = :categoriaId) " +
+           "AND (:marca IS NULL OR p.marca = :marca) " +
+           "AND (:precioMin IS NULL OR p.precioMinorista >= :precioMin) " +
+           "AND (:precioMax IS NULL OR p.precioMinorista <= :precioMax) " +
+           "AND (:disponible IS NULL OR (:disponible = true AND p.stock > 0) OR :disponible = false)",
+           countQuery = "SELECT COUNT(p) FROM Producto p WHERE p.activo = true " +
            "AND (:categoriaId IS NULL OR p.categoria.id = :categoriaId) " +
            "AND (:marca IS NULL OR p.marca = :marca) " +
            "AND (:precioMin IS NULL OR p.precioMinorista >= :precioMin) " +
@@ -34,7 +47,11 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
             Pageable pageable
     );
 
-    @Query("SELECT p FROM Producto p WHERE p.activo = true " +
+    @Query(value = "SELECT DISTINCT p FROM Producto p LEFT JOIN FETCH p.imagenes LEFT JOIN FETCH p.categoria WHERE p.activo = true " +
+           "AND (LOWER(p.nombre) LIKE LOWER(CONCAT('%', :query, '%')) " +
+           "OR LOWER(p.descripcion) LIKE LOWER(CONCAT('%', :query, '%')) " +
+           "OR LOWER(p.sku) LIKE LOWER(CONCAT('%', :query, '%')))",
+           countQuery = "SELECT COUNT(p) FROM Producto p WHERE p.activo = true " +
            "AND (LOWER(p.nombre) LIKE LOWER(CONCAT('%', :query, '%')) " +
            "OR LOWER(p.descripcion) LIKE LOWER(CONCAT('%', :query, '%')) " +
            "OR LOWER(p.sku) LIKE LOWER(CONCAT('%', :query, '%')))")
@@ -44,6 +61,9 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
     List<String> findAllMarcas();
 
     long countByActivoTrue();
+
+    @Query("SELECT DISTINCT p FROM Producto p LEFT JOIN FETCH p.imagenes LEFT JOIN FETCH p.categoria WHERE p.categoria.id = :categoriaId AND p.activo = true AND p.id <> :productoId")
+    List<Producto> findRelacionadosWithImages(@Param("categoriaId") Long categoriaId, @Param("productoId") Long productoId, Pageable pageable);
 
     List<Producto> findByCategoriaIdAndActivoTrueAndIdNot(Long categoriaId, Long productoId, Pageable pageable);
 

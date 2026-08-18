@@ -132,6 +132,7 @@ export default function AdminProductoFormPage() {
       toast.success(`${newImageFiles.length} imagen(es) subida(s)`);
     } catch (err: any) {
       toast.error(err.message || 'Error al subir imágenes');
+      throw err;
     } finally {
       setUploadingImages(false);
     }
