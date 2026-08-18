@@ -9,11 +9,11 @@ import {
   FaBroom,
   FaFaucet,
   FaFire,
-  FaShieldCat,
+  FaShieldAlt,
   FaBoxOpen,
   FaScrewdriver,
   FaLightbulb,
-} from 'react-icons/fa6';
+} from 'react-icons/fa';
 import { getImageUrl } from '@/lib/utils';
 
 interface CategoryIconProps {
@@ -25,7 +25,7 @@ interface CategoryIconProps {
 }
 
 export default function CategoryIcon({ nombre, slug = '', imagenUrl, size = 28, className = '' }: CategoryIconProps) {
-  if (imagenUrl) {
+  if (imagenUrl && imagenUrl.trim().length > 0) {
     return (
       <img
         src={getImageUrl(imagenUrl)}
@@ -36,35 +36,42 @@ export default function CategoryIcon({ nombre, slug = '', imagenUrl, size = 28, 
     );
   }
 
-  const nameLower = (nombre || '').toLowerCase();
-  const slugLower = (slug || '').toLowerCase();
+  const nameNormalized = (nombre || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  const slugNormalized = (slug || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
 
   // Match icon based on category name or slug
-  if (nameLower.includes('pintur') || slugLower.includes('pintur')) {
+  if (nameNormalized.includes('pintur') || slugNormalized.includes('pintur')) {
     return <FaPaintRoller size={size} className={className} />;
   }
-  if (nameLower.includes('calefac') || slugLower.includes('calefac')) {
+  if (nameNormalized.includes('calefac') || slugNormalized.includes('calefac')) {
     return <FaFire size={size} className={className} />;
   }
-  if (nameLower.includes('electr') || slugLower.includes('electr') || nameLower.includes('iluminac')) {
+  if (nameNormalized.includes('electr') || slugNormalized.includes('electr') || nameNormalized.includes('iluminac')) {
     return <FaBolt size={size} className={className} />;
   }
-  if (nameLower.includes('jardin') || slugLower.includes('jardin') || nameLower.includes('planta')) {
+  if (nameNormalized.includes('jardin') || slugNormalized.includes('jardin') || nameNormalized.includes('planta')) {
     return <FaLeaf size={size} className={className} />;
   }
-  if (nameLower.includes('construc') || slugLower.includes('construc') || nameLower.includes('obra')) {
+  if (nameNormalized.includes('construc') || slugNormalized.includes('construc') || nameNormalized.includes('obra')) {
     return <FaHardHat size={size} className={className} />;
   }
-  if (nameLower.includes('herramient') || slugLower.includes('herramient')) {
+  if (nameNormalized.includes('herramient') || slugNormalized.includes('herramient')) {
     return <FaTools size={size} className={className} />;
   }
-  if (nameLower.includes('limpieza') || slugLower.includes('limpieza') || nameLower.includes('quimic')) {
+  if (nameNormalized.includes('limpieza') || slugNormalized.includes('limpieza') || nameNormalized.includes('quimic')) {
     return <FaBroom size={size} className={className} />;
   }
-  if (nameLower.includes('sanitari') || slugLower.includes('sanitari') || nameLower.includes('plomer') || nameLower.includes('baño')) {
+  if (nameNormalized.includes('sanitari') || slugNormalized.includes('sanitari') || nameNormalized.includes('plomer') || nameNormalized.includes('bano')) {
     return <FaFaucet size={size} className={className} />;
   }
-  if (nameLower.includes('fijacion') || nameLower.includes('tornill') || nameLower.includes('bulon')) {
+  if (nameNormalized.includes('fijacion') || nameNormalized.includes('tornill') || nameNormalized.includes('bulon')) {
     return <FaScrewdriver size={size} className={className} />;
   }
 
